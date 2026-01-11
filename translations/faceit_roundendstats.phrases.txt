@@ -1,0 +1,9 @@
+"Phrases"
+{
+	"DamageStats"
+	{
+		"en"		" {GREEN}[FACEIT] To: [%d / %d hits] From: [%d / %d hits] - %s (%d hp)"
+		"ru"		" {GREEN}[FACEIT] To: [%d / %d хитов] From: [%d / %d хитов] - %s (%d hp)"
+		"ua"		" {GREEN}[FACEIT] To: [%d / %d хітів] From: [%d / %d хітів] - %s (%d hp)"
+	}
+}
