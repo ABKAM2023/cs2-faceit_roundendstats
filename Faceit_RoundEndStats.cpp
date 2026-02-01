@@ -82,36 +82,20 @@ void OnPlayerHurt(const char* szName, IGameEvent* pEvent, bool bDontBroadcast)
 {
     if (!pEvent) return;
     
-    int iAttacker = pEvent->GetInt("attacker");
-    int iVictim = pEvent->GetInt("userid");
+    int iAttacker = pEvent->GetPlayerSlot("attacker").Get();
+    int iVictim = pEvent->GetPlayerSlot("userid").Get();
     int iDamage = pEvent->GetInt("dmg_health");
     int iHealth = pEvent->GetInt("health");
-    
-    CCSPlayerController* pAttackerController = nullptr;
-    CCSPlayerController* pVictimController = nullptr;
-    
-    for (int i = 0; i <= gpGlobals->maxClients; i++)
-    {
-        CCSPlayerController* pController = (CCSPlayerController*)g_pEntitySystem->GetEntityInstance(CEntityIndex(i + 1));
-        if (!pController) continue;
-        
-        CBasePlayerController* pBaseController = (CBasePlayerController*)pController;
-        if (!pBaseController) continue;
-        
-        CPlayerSlot slot = pBaseController->GetPlayerSlot();
-        
-        int playerUserId = engine->GetPlayerUserId(slot).Get();
-        
-        if (playerUserId == iAttacker)
-            pAttackerController = pController;
-        if (playerUserId == iVictim)
-            pVictimController = pController;
-    }
-    
+
+    if (iAttacker < 0 || iVictim < 0) return;
+
+    CCSPlayerController* pAttackerController = CCSPlayerController::FromSlot(iAttacker);
+    CCSPlayerController* pVictimController = CCSPlayerController::FromSlot(iVictim);
+
     if (!pAttackerController || !pVictimController) return;
-    
-    int iAttackerSlot = pAttackerController->GetPlayerSlot();
-    int iVictimSlot = pVictimController->GetPlayerSlot();
+
+    int iAttackerSlot = iAttacker;
+    int iVictimSlot = iVictim;
 
     if (iAttackerSlot == iVictimSlot) return;
     
@@ -128,33 +112,18 @@ void OnPlayerDeath(const char* szName, IGameEvent* pEvent, bool bDontBroadcast)
 {
     if (!pEvent) return;
     
-    int iAttacker = pEvent->GetInt("attacker");
-    int iVictim = pEvent->GetInt("userid");
-    
-    CCSPlayerController* pAttackerController = nullptr;
-    CCSPlayerController* pVictimController = nullptr;
-    
-    for (int i = 0; i <= gpGlobals->maxClients; i++)
-    {
-        CCSPlayerController* pController = (CCSPlayerController*)g_pEntitySystem->GetEntityInstance(CEntityIndex(i + 1));
-        if (!pController) continue;
-        
-        CBasePlayerController* pBaseController = (CBasePlayerController*)pController;
-        if (!pBaseController) continue;
-        
-        CPlayerSlot slot = pBaseController->GetPlayerSlot();
-        int playerUserId = engine->GetPlayerUserId(slot).Get();
-        
-        if (playerUserId == iAttacker)
-            pAttackerController = pController;
-        if (playerUserId == iVictim)
-            pVictimController = pController;
-    }
-    
+    int iAttacker = pEvent->GetPlayerSlot("attacker").Get();
+    int iVictim = pEvent->GetPlayerSlot("userid").Get();
+
+    if (iAttacker < 0 || iVictim < 0) return;
+
+    CCSPlayerController* pAttackerController = CCSPlayerController::FromSlot(iAttacker);
+    CCSPlayerController* pVictimController = CCSPlayerController::FromSlot(iVictim);
+
     if (!pAttackerController || !pVictimController) return;
-    
-    int iAttackerSlot = pAttackerController->GetPlayerSlot();
-    int iVictimSlot = pVictimController->GetPlayerSlot();
+
+    int iAttackerSlot = iAttacker;
+    int iVictimSlot = iVictim;
     
     if (iAttackerSlot == iVictimSlot) return;
 
@@ -165,15 +134,14 @@ void OnPlayerDeath(const char* szName, IGameEvent* pEvent, bool bDontBroadcast)
 
 void OnRoundEnd(const char* szName, IGameEvent* pEvent, bool bDontBroadcast)
 {
-    for (int i = 0; i <= gpGlobals->maxClients; i++)
+    if (!gpGlobals) return;
+
+    for (int i = 0; i < gpGlobals->maxClients; i++)
     {
-        CCSPlayerController* pController = (CCSPlayerController*)g_pEntitySystem->GetEntityInstance(CEntityIndex(i + 1));
+        CCSPlayerController* pController = CCSPlayerController::FromSlot(i);
         if (!pController) continue;
         
-        CBasePlayerController* pBaseController = (CBasePlayerController*)pController;
-        if (!pBaseController) continue;
-        
-        int iSlot = pBaseController->GetPlayerSlot();
+        int iSlot = i;
         
         if (g_pPlayers && !g_pPlayers->IsInGame(iSlot)) continue;
         
@@ -190,7 +158,7 @@ void OnRoundEnd(const char* szName, IGameEvent* pEvent, bool bDontBroadcast)
         {
             int iOtherSlot = pair.first;
             
-            CCSPlayerController* pOtherController = (CCSPlayerController*)g_pEntitySystem->GetEntityInstance(CEntityIndex(iOtherSlot + 1));
+            CCSPlayerController* pOtherController = CCSPlayerController::FromSlot(iOtherSlot);
             if (!pOtherController) continue;
             
             const char* szOtherName = pOtherController->m_iszPlayerName();
@@ -218,8 +186,7 @@ void StartupServer()
 	g_pGameEntitySystem = GameEntitySystem();
 	g_pEntitySystem = g_pUtils->GetCEntitySystem();
 	gpGlobals = g_pUtils->GetCGlobalVars();
-	
-	ResetAllStats();
+    ResetAllStats();
 }
 
 bool Faceit_RoundEndStats::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool late)
@@ -280,7 +247,7 @@ const char* Faceit_RoundEndStats::GetLicense()
 
 const char* Faceit_RoundEndStats::GetVersion()
 {
-	return "1.0";
+	return "1.0.1";
 }
 
 const char* Faceit_RoundEndStats::GetDate()
